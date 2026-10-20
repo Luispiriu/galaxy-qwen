@@ -1,0 +1,17 @@
+{
+  "model_id": "Qwen/Qwen3-VL-4B-Instruct",
+  "dataset_path": "C:\\Users\\USER\\OneDrive - Instituto Tecnologico y de Estudios Superiores de Monterrey\\Vision computacional\\Proyecto final\\data\\Galaxy10_DECals.h5",
+  "validation_hash": "2604be4aa41ba65d08a95aaaa503384f2a479b95a1a1834a89c610daff4c5114",
+  "seed": 42,
+  "treatment": "gaussian",
+  "sample_size": 1000,
+  "max_new_tokens": 16,
+  "prompt_hash": "80c2655960fe8e854ffb46891ef665646e12d30dc0507b7bf836b4c59dc9c3fb",
+  "quantization": "NF4_4bit",
+  "gaussian_kernel": 5,
+  "gaussian_sigma": 1,
+  "clahe_clip": 2.0,
+  "clahe_grid": 8,
+  "otsu_output": "masked_rgb",
+  "pipeline_version": "v2_sqlite"
+}

@@ -1,0 +1,27 @@
+﻿__pycache__/
+*.pyc
+.venv/
+.env
+.vscode/
+
+# Dataset y pesos del modelo
+*.h5
+*.hdf5
+*.safetensors
+*.pt
+*.pth
+
+# Imagenes del dataset
+data/**/*.jpg
+data/**/*.jpeg
+data/**/*.png
+data/**/*.webp
+data/**/*.npy
+data/**/*.npz
+
+# MLflow local
+mlruns/
+mlartifacts/
+mlflow.db
+mlflow.db-shm
+mlflow.db-wal
