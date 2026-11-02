@@ -1,160 +1,87 @@
-# Galaxy10 DECaLS: Clasificación morfológica de galaxias mediante Qwen3-VL y procesamiento de imágenes
+# Galaxy10: segmentación y clasificación morfológica de galaxias
 
-Proyecto de visión computacional para evaluar el impacto del preprocesamiento digital de imágenes en la clasificación morfológica de galaxias utilizando **Qwen3-VL-4B-Instruct**, el conjunto de datos **Galaxy10 DECaLS** y **MLflow** para el seguimiento experimental.
+Comparación de siete tratamientos de imagen con **Qwen3-VL-4B-Instruct**, usando Galaxy10 DECaLS y MLflow. Pregunta: ¿el preprocesamiento y la segmentación mejoran la clasificación morfológica?
 
-## 1. Descripción del proyecto
+## Alcance: experimento completo y prueba para el tutorial
 
-La clasificación morfológica de galaxias consiste en identificar sus características estructurales, como su forma, orientación, presencia de brazos espirales, barras o señales de interacción con otras galaxias.
-
-El reconocimiento de estas características puede verse afectado por las condiciones visuales de las imágenes, incluyendo el contraste, el ruido y la distribución de intensidades.
-
-Este proyecto investiga si diferentes técnicas de procesamiento digital de imágenes pueden modificar el desempeño de un modelo multimodal de visión y lenguaje (VLM) en una tarea de clasificación astronómica.
-
-Se comparan cinco condiciones experimentales utilizando imágenes originales, suavizado gaussiano, ecualización adaptativa CLAHE y segmentación mediante el método de Otsu.
-
-### Pregunta de investigación
-
-**¿En qué medida el suavizado gaussiano, la ecualización adaptativa CLAHE y la segmentación mediante Otsu afectan el desempeño de Qwen3-VL-4B en la clasificación morfológica de galaxias del conjunto Galaxy10 DECaLS?**
-
-### Hipótesis
-
-Las transformaciones de procesamiento digital de imágenes pueden facilitar la identificación de características morfológicas al mejorar el contraste y reducir información visual irrelevante.
-
-Sin embargo, determinadas transformaciones también pueden eliminar detalles estructurales importantes y disminuir el desempeño del modelo.
-
-Por ello, se espera que el efecto del preprocesamiento varíe según la técnica utilizada y la clase morfológica analizada.
-
-## 2. Objetivos
-
-### Objetivo general
-
-Evaluar el impacto de diferentes técnicas de procesamiento digital de imágenes sobre el desempeño de Qwen3-VL-4B-Instruct en la clasificación morfológica de galaxias de Galaxy10 DECaLS.
-
-### Objetivos específicos
-
-1. Implementar transformaciones de suavizado gaussiano, CLAHE y segmentación mediante Otsu.
-2. Evaluar el modelo Qwen3-VL-4B-Instruct bajo cinco condiciones visuales.
-3. Comparar el desempeño mediante accuracy, precision, recall y F1.
-4. Analizar los resultados por clase utilizando matrices de confusión.
-5. Registrar los parámetros, métricas y resultados con MLflow.
-6. Seleccionar una transformación candidata para una fase posterior de fine-tuning especializado.
-
-## 3. Dataset: Galaxy10 DECaLS
-
-Se utiliza el conjunto de datos **Galaxy10 DECaLS**, compuesto por 17,736 imágenes RGB de galaxias, de 256 × 256 píxeles, organizadas en diez categorías morfológicas.
-
-**Fuentes:**
-
-- [Galaxy10 DECaLS — Zenodo](https://zenodo.org/records/10845026)
-- [Documentación de Galaxy10](https://astronn.readthedocs.io/en/stable/galaxy10.html)
-- [Repositorio Galaxy10](https://github.com/henrysky/Galaxy10)
-
-### Clases morfológicas
-
-| ID | Clase |
-|---|---|
-| 0 | Disturbed |
-| 1 | Merging |
-| 2 | Round Smooth |
-| 3 | In-between Smooth |
-| 4 | Cigar-shaped Smooth |
-| 5 | Barred Spiral |
-| 6 | Unbarred Tight Spiral |
-| 7 | Unbarred Loose Spiral |
-| 8 | Edge-on without Bulge |
-| 9 | Edge-on with Bulge |
-
-### División de los datos
-
-| Conjunto | Imágenes | Uso |
-|---|---:|---|
-| Validación | 1,000 | Comparación de transformaciones |
-| Prueba final | 2,000 | Evaluación final de modelos |
-| Restantes | 14,736 | Disponibles para entrenamiento y otras particiones |
-| **Total** | **17,736** | |
-
-El conjunto de validación contiene 100 imágenes por clase y el conjunto de prueba reservado contiene 200 imágenes por clase.
-
-Se verificó que no existiera solapamiento entre ambos conjuntos.
-
-**Importante:** las imágenes de prueba final no se utilizaron para calcular los resultados reportados en este README.
-
-## 4. Metodología experimental
-
-Se utilizó el mismo conjunto de validación, modelo de lenguaje visual y prompt de clasificación en los cinco experimentos. La variable modificada fue el procesamiento aplicado a cada imagen.
-
-### Transformaciones evaluadas
-
-| ID | Tratamiento | Configuración |
+| Material | Alcance | Estado |
 |---|---|---|
-| E0 | Original | Imagen RGB sin modificar |
-| E1 | Gaussian | Kernel 5 × 5, sigma = 1 |
-| E2 | CLAHE | Canal L en LAB, `clipLimit=2.0`, cuadrícula 8 × 8 |
-| E3 | Gaussian + Otsu | Suavizado, escala de grises, Otsu y máscara sobre RGB |
-| E4 | CLAHE + Otsu | Realce de contraste, escala de grises, Otsu y máscara sobre RGB |
+| **Slides y resultados experimentales** | Las mismas **1,000 galaxias de validación**, 100 por clase, en siete tratamientos: **7,000 clasificaciones**. | Experimento terminado; resultados incluidos en la presentación. |
+| **Código de prueba refinada: notebook del tutorial** | Las mismas **10 galaxias**, una por clase, en cada tratamiento: **70 imágenes procesadas**. | Probado localmente; falta probarlo en Google Colab. |
+| **Código del repositorio** | Pipeline completo para preparar datos, segmentar, clasificar y registrar resultados. | Disponible; conserva la evaluación completa de 1,000 imágenes por tratamiento. |
 
-En los tratamientos que utilizan Otsu, el umbral se calcula automáticamente para cada imagen. La máscara binaria resultante se utiliza para conservar los píxeles correspondientes al primer plano en la imagen RGB procesada, mientras que los demás píxeles se establecen en negro.
+El notebook ejecuta el procesamiento de los diez ejemplos y consulta las predicciones de Qwen ya calculadas. La inferencia nueva con Qwen y el registro de una nueva demo en MLflow son opcionales y están desactivados por defecto. Las métricas de la muestra se separan de las del experimento completo; **la muestra de diez no sustituye la validación de 1,000**.
 
-No se utilizaron máscaras de segmentación de referencia. Por tanto, las estadísticas de Otsu son descriptivas y no constituyen una evaluación de segmentación mediante IoU o Dice.
+## Entregables: qué tenemos y qué falta
 
-### Flujo experimental
+### Construye 1: explicar el artículo y el método
 
-```text
-Galaxy10 DECaLS
-       |
-       v
-Selección de 1,000 imágenes de validación
-       |
-       v
-Cinco tratamientos de preprocesamiento
-       |
-       v
-Qwen3-VL-4B-Instruct
-       |
-       v
-Predicción de clase morfológica (0-9)
-       |
-       v
-Comparación con etiquetas reales
-       |
-       v
-Accuracy / Precision / Recall / F1
-       |
-       v
-Registro y visualización en MLflow
-```
+| Entregable | Qué tenemos | Qué falta |
+|---|---|---|
+| **Presentación en PDF** | Slides en Canva y PDF, análisis ampliado del artículo principal, fundamentos, algoritmo, aplicaciones, ventajas, limitaciones y resultados del experimento completo. | Revisión final del equipo. |
+| **Video de 10 minutos + demo de máximo 5 minutos** | Presentación y notebook para demostrar el método. | Grabar la exposición y la demo; ensayar los tiempos. |
 
-## 5. Modelo y entorno de ejecución
+### Construye 2: enseñar la implementación
 
-| Elemento | Configuración |
+| Entregable | Qué tenemos | Qué falta |
+|---|---|---|
+| **Google Colab y código** | Repositorio con el pipeline completo y notebook refinado de diez ejemplos por tratamiento, con explicación, resultados, limitaciones y referencias. | Probarlo en Colab y completar nombres y contribuciones reales de los integrantes. |
+| **Video tutorial de 5 a 10 minutos** | Código y ejemplos listos para recorrer la implementación. | Grabar la ejecución y la explicación paso a paso. |
+| **Presentación del artículo** | Se reutiliza la presentación de Construye 1, con el análisis ampliado del artículo. | Revisión final del equipo. |
+| **ZIP final** | Código, notebook, presentación y un ZIP de exportaciones de la demo. | Integrar los materiales definitivos y el video tutorial. Los ZIP existentes no son la entrega final completa. |
+
+**Pendientes comunes:** terminar los videos, verificar Colab, completar las contribuciones y preparar/subir las entregas finales. El guion anterior corresponde a 22 slides; requiere ajustarse a la presentación actual de 39.
+
+## Ubicación de los materiales
+
+Rutas relativas a la raíz del repositorio:
+
+| Material | Ubicación |
 |---|---|
-| Modelo | Qwen3-VL-4B-Instruct |
-| Arquitectura | Vision-Language Model (VLM) |
-| Cuantización | 4 bits, NF4 |
-| Hardware | NVIDIA GeForce RTX 4060 |
-| Sistema operativo | Windows |
-| Entorno Conda | `hitvision` |
-| Lenguaje | Python |
-| Procesamiento de imágenes | OpenCV |
-| Inferencia | PyTorch y Transformers |
-| Evaluación | scikit-learn |
-| Seguimiento experimental | MLflow 3.17.1 |
-| Backend MLflow | SQLite |
-| Fine-tuning en esta fase | No |
+| **Presentación actual, 39 slides** | [output/pdf/Presentacion_Galaxy10_Tec_Articulo_Ampliado.pdf](output/pdf/Presentacion_Galaxy10_Tec_Articulo_Ampliado.pdf) |
+| **Presentación editable en Canva** | [Abrir editor](https://www.canva.com/d/XXyHnIu-gf-PTGw); enlaces y notas en [output/experimento/Canva_Presentacion_Tec.md](output/experimento/Canva_Presentacion_Tec.md) |
+| **Notebook vigente: diez ejemplos por tratamiento** | [output/tutorial/Tutorial_Galaxy10_10_por_tratamiento.ipynb](output/tutorial/Tutorial_Galaxy10_10_por_tratamiento.ipynb) |
+| Exportaciones de la demo | [output/tutorial/Demo_Galaxy10_10_por_tratamiento.zip](output/tutorial/Demo_Galaxy10_10_por_tratamiento.zip) |
+| Análisis del artículo principal | [output/experimento/Analisis_Articulo_Horowitz_Pavlidis.md](output/experimento/Analisis_Articulo_Horowitz_Pavlidis.md) |
+| Anexo de referencias, métricas y matrices | [output/pdf/Anexo_Referencias_y_Resultados_Galaxy10.pdf](output/pdf/Anexo_Referencias_y_Resultados_Galaxy10.pdf) |
+| Resultados completos de clasificación | [resultados_qwen/comparacion_mlflow.csv](resultados_qwen/comparacion_mlflow.csv) y `resultados_qwen/<tratamiento>/` |
+| Exportaciones completas de segmentación | `resultados_split_merge/gaussian/` y `resultados_split_merge/clahe/` |
+| Seguimiento experimental local | `mlflow.db` y `mlartifacts/` |
+| Código fuente y dependencias | Archivos `.py` de la raíz y [requirements.txt](requirements.txt) |
 
-El modelo se ejecutó mediante inferencia local, sin realizar fine-tuning.
+`output/parte1/Demo_Split_Merge_5_min.ipynb`, los otros PDF de presentación y `output/Parte1_Split_and_Merge.zip` son versiones anteriores. Para el tutorial usar el notebook de `output/tutorial/`; para las slides, el PDF ampliado indicado arriba.
 
-Para cada imagen, se solicitó al modelo seleccionar una de las diez categorías morfológicas y devolver únicamente un número entero del 0 al 9.
+## Datos y método
 
-Se utilizó generación determinista (`do_sample=False`) y la misma instrucción de clasificación para todos los tratamientos.
+**Galaxy10 DECaLS:** 17,736 imágenes RGB de 256 × 256, diez clases. La evaluación reportada utiliza exclusivamente `data/validacion_1000.csv`: 1,000 imágenes, 100 por clase. Las 2,000 imágenes de prueba reservadas no se evaluaron y no sustentan estos resultados; se verificó que no se solapan con validación.
 
-## 6. Resultados experimentales
+| ID | Clase | ID | Clase |
+|---|---|---|---|
+| 0 | Disturbed | 5 | Barred Spiral |
+| 1 | Merging | 6 | Unbarred Tight Spiral |
+| 2 | Round Smooth | 7 | Unbarred Loose Spiral |
+| 3 | In-between Smooth | 8 | Edge-on without Bulge |
+| 4 | Cigar-shaped Smooth | 9 | Edge-on with Bulge |
 
-Se completaron **5,000 inferencias**, distribuidas entre los cinco tratamientos.
+Flujo: **imagen → tratamiento → Qwen → clase 0–9 → métricas → MLflow**. Se mantuvieron las mismas imágenes, modelo, prompt y generación determinista (`do_sample=False`). Modelo cuantizado a 4 bits NF4, ejecutado localmente en una NVIDIA RTX 4060, sin fine-tuning.
 
-Cada experimento evaluó las mismas 1,000 imágenes de validación.
+| Tratamiento | Configuración |
+|---|---|
+| Original | RGB sin modificar. |
+| Gaussian | Kernel 5 × 5, sigma 1. |
+| CLAHE | Canal L de LAB; `clipLimit=2`, cuadrícula 8 × 8. |
+| Gaussian + Otsu | Gaussian, umbral automático en grises y máscara aplicada al RGB procesado. |
+| CLAHE + Otsu | CLAHE, umbral automático en grises y máscara aplicada al RGB procesado. |
+| Gaussian + split and merge | Gaussian y segmentación con `tau=10`, `min_size=4`, `fondo_k=3`. |
+| CLAHE + split and merge | CLAHE y la misma configuración de split and merge. |
 
-### Resultados generales
+**Split and merge:** `segmentacion.py` divide bloques en cuatro cuando su desviación estándar supera `tau`, hasta el tamaño mínimo. Fusiona regiones que comparten borde si la desviación estándar de la unión es ≤ `tau`, priorizando la unión más homogénea y actualizando adyacencias. Los bloques mínimos pueden conservar heterogeneidad. Para seleccionar primer plano se exige que la media de la región supere `mediana del perímetro + fondo_k × max(1, 1.4826 × MAD)`.
+
+Es una variante inspirada en Horowitz y Pavlidis (1976), con criterio de desviación estándar y selección de fondo propios; el artículo original utiliza un criterio de rango de intensidades. Qwen recibe el **RGB enmascarado**. Los parámetros son la configuración evaluada, sin ajustes manuales por imagen ni demostración de optimalidad.
+
+## Resultados completos: siete tratamientos
+
+**7,000 clasificaciones, 1,000 por tratamiento; cero respuestas inválidas.** Accuracy mide la proporción de aciertos; F1 macro promedia el F1 de las diez clases con el mismo peso.
 
 | Tratamiento | Accuracy | Precision macro | Recall macro | F1 macro |
 |---|---:|---:|---:|---:|
@@ -163,366 +90,135 @@ Cada experimento evaluó las mismas 1,000 imágenes de validación.
 | CLAHE | 0.3100 | 0.2515 | 0.3100 | 0.2387 |
 | Gaussian + Otsu | 0.2300 | 0.2288 | 0.2300 | 0.1698 |
 | **CLAHE + Otsu** | **0.3130** | **0.3439** | **0.3130** | **0.2472** |
+| Gaussian + split and merge | 0.2180 | 0.2020 | 0.2180 | 0.1565 |
+| CLAHE + split and merge | 0.1620 | 0.1595 | 0.1620 | 0.0926 |
 
-**Mejor tratamiento según F1 macro: CLAHE + Otsu.**
+### Cambio respecto a la imagen original
 
-El tratamiento obtuvo:
-
-- Accuracy: **31.3 %**
-- Precision macro: **0.3439**
-- Recall macro: **0.3130**
-- F1 macro: **0.2472**
-- Respuestas inválidas: **0**
-
-### Comparación respecto a la imagen original
-
-| Tratamiento | Diferencia de accuracy | Diferencia de F1 macro |
+| Tratamiento | Cambio de accuracy (puntos porcentuales) | Cambio de F1 macro |
 |---|---:|---:|
-| Gaussian | +0.4 puntos porcentuales | +0.0022 |
-| CLAHE | +2.8 puntos porcentuales | +0.0185 |
-| Gaussian + Otsu | −5.2 puntos porcentuales | −0.0504 |
-| **CLAHE + Otsu** | **+3.1 puntos porcentuales** | **+0.0270** |
+| Gaussian | +0.4 | +0.0022 |
+| CLAHE | +2.8 | +0.0185 |
+| Gaussian + Otsu | −5.2 | −0.0504 |
+| **CLAHE + Otsu** | **+3.1** | **+0.0270** |
+| Gaussian + split and merge | −6.4 | −0.0637 |
+| CLAHE + split and merge | −12.0 | −0.1276 |
 
-CLAHE + Otsu incrementó el F1 macro aproximadamente **12.2 % en términos relativos** respecto a las imágenes originales.
+- **Mejor resultado:** CLAHE + Otsu, 31.3 % de accuracy y 0.2472 de F1 macro; mejora relativa de F1 ≈ 12.2 % frente al original. En la comparación emparejada corrigió 94 errores y perdió 63 aciertos: 31 aciertos netos; 219 imágenes fueron correctas en ambos y 624 incorrectas en ambos.
+- **Agregar segmentación no siempre ayuda:** Gaussian + split and merge pierde 0.0660 de F1 frente a Gaussian; CLAHE + split and merge pierde 0.1461 frente a CLAHE y obtiene el menor desempeño global.
+- **Errores por clase:** CLAHE + split and merge predice *Round Smooth* 604 veces, frente a 100 casos reales; original lo hace 524 veces y CLAHE + Otsu, 410. La clase 3 tiene F1 = 0 en los siete tratamientos; el máximo F1 de la clase 6 es apenas 0.0367.
 
-Todos los experimentos produjeron respuestas válidas dentro del rango de clases 0–9.
+Las métricas completas por clase, F1 weighted y predicciones están en `resultados_qwen/comparacion_mlflow.csv` y en cada carpeta de tratamiento. F1 weighted coincide con F1 macro porque todas las clases tienen 100 ejemplos.
 
-### Tiempo de ejecución
+### Estadísticas de segmentación
 
-| Tratamiento | Tiempo aproximado |
-|---|---|
-| Original | 11 min 51 s |
-| Gaussian | 11 min 53 s |
-| CLAHE | 11 min 30 s |
-| Gaussian + Otsu | 11 min 57 s |
-| CLAHE + Otsu | 11 min 41 s |
-| **Total de inferencias** | **58 min 52 s** |
+Medias sobre las 1,000 imágenes de cada tratamiento:
 
-El tiempo total indicado corresponde a la suma de las ejecuciones de clasificación y no incluye necesariamente toda la inicialización del programa.
+| Tratamiento | Píxeles conservados (%) | Componentes conectados | Umbral Otsu |
+|---|---:|---:|---:|
+| Gaussian + Otsu | 5.4582 | 9.236 | 86.321 |
+| CLAHE + Otsu | 33.5811 | 2000.642 | 84.996 |
+| Gaussian + split and merge | 7.9231 | 3.633 | — |
+| CLAHE + split and merge | 2.9448 | 6.526 | — |
 
-## 7. Análisis de resultados
+| Split and merge | Regiones tras dividir | Regiones tras fusionar | Regiones seleccionadas | Umbral de fondo | Máscaras vacías / completas |
+|---|---:|---:|---:|---:|---:|
+| Gaussian | 355.378 | 72.105 | 70.797 | 48.9704 | 5 / 1 |
+| CLAHE | 4060.285 | 3970.012 | 60.885 | 164.0544 | 0 / 0 |
 
-### 7.1. Impacto del preprocesamiento
+`num_regions` cuenta componentes conectados del primer plano con conectividad 8; no equivale al número de regiones tras la fusión. Los conteos de máscaras vacías/completas son totales.
 
-Las métricas muestran diferencias en el desempeño del modelo dependiendo de la transformación utilizada.
+### Tiempos
 
-Esto respalda, a nivel descriptivo, que el preprocesamiento puede modificar la información visual que utiliza Qwen3-VL-4B para realizar la clasificación.
+| Tratamiento | Generación media Qwen (s/imagen) | Preprocesamiento medio (s/imagen) | Duración aproximada registrada en la fase inicial |
+|---|---:|---:|---|
+| Original | 0.3274 | No medido | 11 min 51 s |
+| Gaussian | 0.3257 | No medido | 11 min 53 s |
+| CLAHE | 0.2961 | No medido | 11 min 30 s |
+| Gaussian + Otsu | 0.3090 | No medido | 11 min 57 s |
+| CLAHE + Otsu | 0.3080 | No medido | 11 min 41 s |
+| Gaussian + split and merge | 0.2963 | 0.0250 | — |
+| CLAHE + split and merge | 0.3002 | 0.0695 | — |
 
-### 7.2. Efecto del suavizado gaussiano
+Las duraciones históricas de los **cinco tratamientos iniciales** suman **58 min 52 s**; no son el tiempo total de los siete. `latency_s` mide generación del modelo, no la ejecución completa. El preprocesamiento se midió por separado únicamente en los dos tratamientos de split and merge.
 
-El suavizado gaussiano produjo una mejora pequeña respecto a las imágenes originales:
+### Conclusión y límites
 
-- Accuracy: de 0.2820 a 0.2860.
-- F1 macro: de 0.2202 a 0.2224.
+CLAHE + Otsu fue el mejor tratamiento en esta validación; ambas variantes de split and merge redujeron el desempeño. La selección de primer plano puede recortar estructuras tenues o conservar estrellas; atribuirle la caída de clasificación es una hipótesis, no una causa demostrada.
 
-La diferencia observada es reducida, por lo que no se puede afirmar que el suavizado aporte una mejora generalizable sin análisis adicionales.
+Accuracy/F1 evalúan **clasificación**. No hay máscaras de referencia para medir IoU/Dice. El modelo no recibió fine-tuning y no se realizó una prueba de significancia estadística; los resultados corresponden a esta validación, sin demostrar superioridad generalizable.
 
-### 7.3. Efecto de CLAHE
+## MLflow y archivos de resultados
 
-CLAHE produjo una mejora más considerable:
+Los **siete runs** se encuentran en el mismo experimento: **`Galaxy10_Qwen3VL_Otsu`**. Cada uno registra parámetros, métricas generales y por clase, predicciones, matriz de confusión, tiempos y estadísticas de segmentación cuando corresponden.
 
-- Accuracy: de 0.2820 a 0.3100.
-- F1 macro: de 0.2202 a 0.2387.
-
-Estos resultados son compatibles con la hipótesis de que el realce de contraste local puede facilitar el reconocimiento de ciertas características morfológicas.
-
-### 7.4. Efecto de Gaussian + Otsu
-
-Gaussian + Otsu obtuvo el menor desempeño:
-
-- Accuracy: 0.2300.
-- F1 macro: 0.1698.
-
-Una posible explicación es que el suavizado, seguido de una umbralización global, descarte información visual importante, especialmente estructuras tenues.
-
-Esta interpretación constituye una hipótesis que debe contrastarse mediante análisis visual y métricas por clase.
-
-### 7.5. Efecto de CLAHE + Otsu
-
-CLAHE + Otsu presentó el mejor desempeño general:
-
-- Accuracy: 0.3130.
-- Precision macro: 0.3439.
-- F1 macro: 0.2472.
-
-El resultado sugiere que la combinación de realce de contraste y segmentación puede beneficiar la clasificación en determinadas condiciones.
-
-Sin embargo, una mejora en la métrica agregada no garantiza mejoras uniformes para las diez clases.
-
-### 7.6. Limitaciones
-
-La exactitud máxima de 31.3 % indica que el desempeño del modelo base sigue siendo limitado para esta tarea especializada.
-
-Adicionalmente:
-
-- No se ha aplicado fine-tuning especializado.
-- No se ha realizado una prueba de significancia estadística.
-- La evaluación corresponde a un conjunto de validación de 1,000 imágenes.
-- Las máscaras producidas por Otsu no se contrastaron con segmentaciones de referencia.
-- Es necesario revisar matrices de confusión y F1 por clase para identificar errores específicos.
-
-Los resultados se interpretan como evidencia experimental preliminar y no como demostración definitiva de superioridad de una transformación.
-
-## 8. MLflow: seguimiento de experimentos
-
-Se utilizó MLflow para registrar y comparar automáticamente los resultados de los cinco tratamientos.
-
-**Nombre del experimento:** `Galaxy10_Qwen3VL_Otsu`
-
-Cada ejecución registra:
-
-- Identificador y configuración del tratamiento.
-- Parámetros del modelo y del preprocesamiento.
-- Accuracy, precision, recall y F1.
-- Métricas individuales por clase.
-- Tiempo promedio de inferencia.
-- Respuestas inválidas.
-- Predicciones individuales en CSV.
-- Matrices de confusión.
-- Estadísticas descriptivas de Otsu, cuando corresponde.
-
-### Abrir MLflow
-
-Desde la carpeta raíz del proyecto:
+Desde la raíz del proyecto:
 
 ```powershell
 conda activate hitvision
 mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
 ```
 
-Abrir en el navegador:
+Abrir [MLflow local](http://127.0.0.1:5000). La base está en `mlflow.db` y los artefactos en `mlartifacts/`. Las rutas pueden depender del equipo original; los resultados de `resultados_qwen/` se consultan sin descargar Qwen ni abrir MLflow.
 
-http://127.0.0.1:5000
+Cada carpeta `resultados_qwen/<tratamiento>/` contiene `predictions.csv`, `metrics.json`, `config.json`, `mlflow_run_id.txt` y `confusion_matrix.png`. La comparación consolidada está en `resultados_qwen/comparacion_mlflow.csv`.
 
-La interfaz permite visualizar las métricas, comparar las ejecuciones y revisar los artefactos disponibles.
+## Qué código ejecutar
 
-### Almacenamiento de resultados
-
-| Archivo o carpeta | Descripción |
+| Archivo | Uso |
 |---|---|
-| `mlflow.db` | Base de datos SQLite con experimentos y métricas |
-| `mlartifacts/` | Artefactos registrados en MLflow |
-| `resultados_qwen/` | Archivos de resultados por tratamiento |
-| `comparacion_mlflow.csv` | Comparación consolidada de métricas |
+| `output/tutorial/Tutorial_Galaxy10_10_por_tratamiento.ipynb` | **Para el tutorial y la demo:** subir a Colab y ejecutar en orden. Incluye las diez galaxias; el recorrido predeterminado usa CPU y predicciones guardadas. |
+| `segmentacion.py` | Implementación de split and merge, incluida en el notebook. Ejecutarlo solo define la función. |
+| `evaluar_qwen.py` | Reproduce la evaluación completa y registra en MLflow. Ya está terminada; no hace falta repetirla en el video. |
+| `experimentar_split_merge.py` | Exporta máscaras, RGB y mapas de regiones de las 1,000 imágenes por preprocesamiento. Las exportaciones completas ya existen. |
+| `crear_notebook_tutorial.py` | Regenera el notebook desde datos y resultados locales; no es necesario para ejecutar la demo. |
+| `descargar_dataset.py`, `explorar_dataset.py`, `preparar_muestra.py`, `preparar_validacion.py` | Descarga, inspección y preparación de datos. Conservar los CSV originales para reproducir las mismas particiones. |
+| `experimentar_otsu.py`, `exportar_imagenes.py`, `probar_qwen.py` | Exploración y comprobaciones auxiliares; el notebook vigente integra el recorrido del tutorial. |
 
-Las visualizaciones interactivas de MLflow se generan a partir de las métricas almacenadas; no todas existen como archivos PNG independientes.
+### Reproducir el experimento completo, si se necesita
 
-## 9. Estructura del proyecto
-
-```text
-Proyecto final/
-|
-├── data/
-│   ├── Galaxy10_DECals.h5
-│   ├── validacion_1000.csv
-│   └── muestra_2000/
-│       └── etiquetas.csv
-│
-├── descargar_dataset.py
-├── explorar_dataset.py
-├── preparar_muestra.py
-├── preparar_validacion.py
-├── experimentar_otsu.py
-├── exportar_imagenes.py
-├── probar_qwen.py
-├── evaluar_qwen.py
-│
-├── comparacion_otsu.png
-│
-├── resultados_qwen/
-│   ├── original/
-│   ├── gaussian/
-│   ├── clahe/
-│   ├── gaussian_otsu/
-│   ├── clahe_otsu/
-│   └── comparacion_mlflow.csv
-│
-├── mlflow.db
-├── mlartifacts/
-├── requirements.txt
-└── README.md
-```
-
-Cada carpeta de tratamiento contiene:
-
-```text
-tratamiento/
-├── predictions.csv
-├── metrics.json
-├── config.json
-├── mlflow_run_id.txt
-└── confusion_matrix.png
-```
-
-## 10. Instalación y reproducción
-
-### 10.1. Clonar el repositorio
+Usar el entorno `hitvision` o instalar [requirements.txt](requirements.txt) en un entorno compatible con CUDA. El dataset debe estar en `data/Galaxy10_DECals.h5`. `evaluar_qwen.py` usa pesos locales (`local_files_only=True`) y caché `E:\huggingface`; ajustar `HF_HOME`, `HF_HUB_CACHE` y `HF_XET_CACHE` en otro equipo.
 
 ```powershell
-git clone URL_DEL_REPOSITORIO
-cd NOMBRE_DEL_REPOSITORIO
+conda activate hitvision
+python evaluar_qwen.py --treatment all
 ```
 
-Sustituir los valores anteriores por la dirección y el nombre reales del repositorio.
-
-### 10.2. Crear un entorno virtual
+Solo las dos variantes de split and merge:
 
 ```powershell
-conda create -n galaxy10 python=3.12 -y
-conda activate galaxy10
+python evaluar_qwen.py --treatment split_merge
 ```
 
-### 10.3. Instalar dependencias
+Se puede indicar un tratamiento individual, como `--treatment clahe_otsu` o `--treatment gaussian_split_merge`. El evaluador reanuda predicciones compatibles sin duplicarlas. Para cambiar parámetros, usar otra salida:
 
 ```powershell
-python -m pip install -r requirements.txt
+python evaluar_qwen.py --treatment split_merge --sm-tau 8 --sm-min-size 2 --sm-fondo-k 2 --output resultados_qwen_sm_alternativo
 ```
 
-**Nota:** el archivo `requirements.txt` se genera a partir del entorno utilizado durante el desarrollo. Puede requerir adaptaciones si se ejecuta en un sistema operativo diferente o en un equipo sin GPU NVIDIA compatible con CUDA.
-
-### 10.4. Descargar el dataset
-
-Fuente oficial:
-
-https://zenodo.org/records/10845026
-
-El archivo requerido es:
-
-`Galaxy10_DECals.h5`
-
-Debe colocarse en:
-
-```text
-data/Galaxy10_DECals.h5
-```
-
-El dataset no se incluye en el repositorio debido a su tamaño.
-
-### 10.5. Preparar los conjuntos de datos
-
-El proyecto incluye los scripts:
+Exportar segmentaciones sin cargar Qwen:
 
 ```powershell
-python preparar_muestra.py
-python preparar_validacion.py
+python experimentar_split_merge.py --preprocesamiento gaussian
+python experimentar_split_merge.py --preprocesamiento clahe
 ```
 
-Para reproducir exactamente los experimentos originales, se deben conservar los mismos identificadores de imágenes y etiquetas utilizados en los archivos CSV de validación y prueba.
+Cada comando procesa **1,000 imágenes** y guarda `clase_*/`, `estadisticas.csv`, `config.json` y `comparacion.png` bajo `resultados_split_merge/<preprocesamiento>/`. La comparación visual muestra una imagen por clase, sin limitar el procesamiento completo. `--por-clase 1` limita explícitamente a diez y requiere otro `--output`.
 
-### 10.6. Configurar Hugging Face
-
-El modelo utilizado es:
-
-https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct
-
-El script de evaluación fue configurado originalmente para utilizar la caché ubicada en `E:\huggingface`.
-
-Si se utiliza otra computadora, es necesario ajustar al inicio de `evaluar_qwen.py` las variables `HF_HOME`, `HF_HUB_CACHE` y `HF_XET_CACHE` para que apunten a una ubicación válida.
-
-El modelo debe descargarse previamente. El script de evaluación utiliza `local_files_only=True`.
-
-### 10.7. Ejecutar la evaluación completa
+Comprobaciones de persistencia, reanudación y configuración, sin Qwen ni escrituras en MLflow:
 
 ```powershell
-python evaluar_qwen.py
+python -m unittest test_experimento_split_merge -v
 ```
 
-Este comando evalúa las cinco condiciones experimentales.
+El dataset, los pesos, las cachés y las exportaciones masivas individuales se excluyen de Git. El código del repositorio y los resultados portables permiten revisar el experimento sin incluir esos archivos pesados.
 
-Para ejecutar únicamente un tratamiento:
+## Referencias
 
-```powershell
-python evaluar_qwen.py --treatment clahe_otsu
-```
-
-El script permite reanudar una ejecución interrumpida, utilizando las predicciones ya guardadas, siempre que se conserve la misma configuración.
-
-### 10.8. Consultar los resultados sin ejecutar Qwen
-
-Los compañeros que únicamente necesiten revisar las conclusiones pueden consultar:
-
-```text
-resultados_qwen/comparacion_mlflow.csv
-```
-
-También pueden visualizar las matrices de confusión y los archivos `metrics.json` de cada tratamiento.
-
-No es necesario descargar los pesos de Qwen para consultar estos archivos.
-
-## 11. Colaboración y GitHub
-
-Se recomienda versionar:
-
-- Código fuente en Python.
-- `README.md`.
-- `requirements.txt`.
-- Archivos CSV de partición de datos.
-- Resultados experimentales consolidados.
-- Matrices de confusión y otras visualizaciones relevantes.
-
-No se recomienda incluir:
-
-- Dataset completo Galaxy10 en formato HDF5.
-- Pesos del modelo Qwen.
-- Cachés de pip, Hugging Face o Conda.
-- Entornos virtuales.
-- Archivos temporales.
-
-### Consideraciones para MLflow
-
-La base de datos SQLite y sus artefactos pueden conservarse como respaldo del experimento, pero no constituyen automáticamente un servidor compartido.
-
-Las rutas de artefactos pueden estar vinculadas al equipo donde se generaron. Por lo tanto, para colaborar entre distintas computadoras, los archivos de `resultados_qwen/` son la principal fuente de resultados portables.
-
-Para compartir una instancia interactiva de MLflow entre varios integrantes se requeriría configurar un servidor de seguimiento accesible para el equipo.
-
-## 12. Próximas etapas
-
-### Etapa 1. Análisis detallado por clase
-
-- Analizar los valores de F1 de cada una de las diez clases.
-- Identificar los errores más frecuentes mediante matrices de confusión.
-- Evaluar qué morfologías se benefician o perjudican con cada transformación.
-- Inspeccionar ejemplos correctamente clasificados y errores representativos.
-
-### Etapa 2. Fine-tuning especializado
-
-Implementar un procedimiento de fine-tuning eficiente mediante LoRA o QLoRA, sujeto a la memoria disponible de la GPU.
-
-La configuración candidata inicial será **CLAHE + Otsu**, seleccionada por su F1 macro en validación.
-
-Se deberán separar apropiadamente los conjuntos de entrenamiento y validación para evitar fuga de información.
-
-### Etapa 3. Evaluación final
-
-Comparar el desempeño del modelo original y el modelo ajustado sobre las 2,000 imágenes reservadas para prueba.
-
-El conjunto de prueba final no deberá utilizarse para elegir transformaciones, hiperparámetros o configuraciones de entrenamiento.
-
-### Etapa 4. Análisis estadístico
-
-Evaluar la incertidumbre de las diferencias observadas y aplicar pruebas estadísticas apropiadas para predicciones emparejadas cuando corresponda.
-
-## 13. Conclusiones preliminares
-
-Los experimentos muestran que el procesamiento digital de imágenes modifica el desempeño de Qwen3-VL-4B en la clasificación morfológica de Galaxy10 DECaLS.
-
-**CLAHE + Otsu presentó el mejor resultado global**, alcanzando un F1 macro de 0.2472 y una exactitud de 31.3 %, frente a un F1 macro de 0.2202 y una exactitud de 28.2 % con imágenes originales.
-
-En contraste, Gaussian + Otsu redujo el desempeño, lo que evidencia que la segmentación automática no necesariamente beneficia a un modelo multimodal.
-
-Estos resultados permiten seleccionar una estrategia candidata de preprocesamiento, pero también muestran la necesidad de mejorar el reconocimiento morfológico mediante adaptación especializada y análisis de errores.
-
-**La contribución principal de esta etapa es una evaluación reproducible de cinco estrategias de procesamiento digital de imágenes sobre un mismo modelo multimodal, con métricas comparables y trazabilidad experimental mediante MLflow.**
-
-## 14. Referencias
-
-1. **Galaxy10 DECaLS.** Conjunto de datos disponible en Zenodo. https://zenodo.org/records/10845026
-2. **astroNN — Galaxy10 Documentation.** https://astronn.readthedocs.io/en/stable/galaxy10.html
-3. **Qwen3-VL-4B-Instruct.** Hugging Face. https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct
-4. **OpenCV — Smoothing Images.** https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
-5. **OpenCV — Histograms: Histogram Equalization (CLAHE).** https://docs.opencv.org/4.x/d5/daf/tutorial_py_histogram_equalization.html
-6. **OpenCV — Image Thresholding (Otsu).** https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
-7. **Otsu, N. (1979).** A Threshold Selection Method from Gray-Level Histograms. IEEE Transactions on Systems, Man, and Cybernetics. https://doi.org/10.1109/TSMC.1979.4310076
-8. **MLflow Documentation.** https://mlflow.org/docs/latest/ml/tracking/
-9. **scikit-learn — Classification Metrics.** https://scikit-learn.org/stable/modules/model_evaluation.html
+- **Artículo principal:** Horowitz, S. L. y Pavlidis, T. (1976). *Picture Segmentation by a Tree Traversal Algorithm*. JACM, 23(2), 368–388. [DOI](https://doi.org/10.1145/321941.321956).
+- **Bibliografía complementaria:** Fu et al. (2013). *Remote Sensing*, 5(7), 3259–3279. [DOI](https://doi.org/10.3390/rs5073259).
+- Otsu, N. (1979). *A Threshold Selection Method from Gray-Level Histograms*. [DOI](https://doi.org/10.1109/TSMC.1979.4310076).
+- Galaxy10 DECaLS: [dataset en Zenodo](https://zenodo.org/records/10845026), [documentación astroNN](https://astronn.readthedocs.io/en/stable/galaxy10.html) y [repositorio](https://github.com/henrysky/Galaxy10).
+- Qwen: [Qwen3-VL-4B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct).
+- OpenCV: [suavizado](https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html), [CLAHE](https://docs.opencv.org/4.x/d5/daf/tutorial_py_histogram_equalization.html) y [Otsu](https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html).
+- [MLflow Tracking](https://mlflow.org/docs/latest/ml/tracking/) y [métricas de scikit-learn](https://scikit-learn.org/stable/modules/model_evaluation.html).

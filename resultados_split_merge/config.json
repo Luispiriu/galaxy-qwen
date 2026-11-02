@@ -1,0 +1,10 @@
+{
+  "dataset": "C:\\Users\\USER\\OneDrive - Instituto Tecnologico y de Estudios Superiores de Monterrey\\Vision computacional\\Proyecto final\\data\\Galaxy10_DECals.h5",
+  "validation": "C:\\Users\\USER\\OneDrive - Instituto Tecnologico y de Estudios Superiores de Monterrey\\Vision computacional\\Proyecto final\\data\\validacion_1000.csv",
+  "output": "C:\\Users\\USER\\OneDrive - Instituto Tecnologico y de Estudios Superiores de Monterrey\\Vision computacional\\Proyecto final\\resultados_split_merge",
+  "preprocesamiento": "gaussian",
+  "por_clase": 1,
+  "tau": 10.0,
+  "min_size": 4,
+  "fondo_k": 3.0
+}

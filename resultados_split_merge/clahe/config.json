@@ -1,0 +1,14 @@
+{
+  "dataset": "C:\\Users\\USER\\OneDrive - Instituto Tecnologico y de Estudios Superiores de Monterrey\\Vision computacional\\Proyecto final\\data\\Galaxy10_DECals.h5",
+  "validation": "C:\\Users\\USER\\OneDrive - Instituto Tecnologico y de Estudios Superiores de Monterrey\\Vision computacional\\Proyecto final\\data\\validacion_1000.csv",
+  "test": "C:\\Users\\USER\\OneDrive - Instituto Tecnologico y de Estudios Superiores de Monterrey\\Vision computacional\\Proyecto final\\data\\muestra_2000\\etiquetas.csv",
+  "output": "C:\\Users\\USER\\OneDrive - Instituto Tecnologico y de Estudios Superiores de Monterrey\\Vision computacional\\Proyecto final\\resultados_split_merge\\clahe",
+  "preprocesamiento": "clahe",
+  "por_clase": 0,
+  "tau": 10.0,
+  "min_size": 4,
+  "fondo_k": 3.0,
+  "sample_size": 1000,
+  "selection_hash": "8c7b90fe2a654c844a84d0eb866123600d12cfcd42d4d8ccaaf435c55a2b61cd",
+  "pipeline_version": "v3_split_merge"
+}

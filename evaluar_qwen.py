@@ -26,6 +26,7 @@ import torch
 
 from PIL import Image
 from tqdm import tqdm
+from segmentacion import segmentar_split_merge
 
 from mlflow.tracking import MlflowClient
 from sklearn.metrics import (
@@ -51,6 +52,14 @@ TRATAMIENTOS = [
     "clahe",
     "gaussian_otsu",
     "clahe_otsu",
+    "gaussian_split_merge",
+    "clahe_split_merge",
+]
+
+TRATAMIENTOS_SPLIT_MERGE = [t for t in TRATAMIENTOS if t.endswith("_split_merge")]
+COLUMNAS_SPLIT_MERGE = [
+    "split_regions", "merged_regions", "foreground_regions",
+    "background_threshold", "preprocessing_s",
 ]
 
 CLASES = [
@@ -102,7 +111,7 @@ Do not explain.
 
 def argumentos():
     parser = argparse.ArgumentParser(
-        description="Galaxy10 + Qwen3-VL + Otsu + MLflow"
+        description="Galaxy10 + Qwen3-VL + Otsu / split and merge + MLflow"
     )
 
     parser.add_argument(
@@ -131,7 +140,7 @@ def argumentos():
     )
     parser.add_argument(
         "--treatment",
-        choices=["all"] + TRATAMIENTOS,
+        choices=["all", "split_merge"] + TRATAMIENTOS,
         default="all"
     )
     parser.add_argument(
@@ -145,14 +154,24 @@ def argumentos():
         default=16
     )
 
-    return parser.parse_args()
+    parser.add_argument("--sm-tau", type=float, default=10.0)
+    parser.add_argument("--sm-min-size", type=int, default=4)
+    parser.add_argument("--sm-fondo-k", type=float, default=3.0)
+    args = parser.parse_args()
+    if not np.isfinite(args.sm_tau) or args.sm_tau < 0:
+        parser.error("--sm-tau debe ser finito y >= 0")
+    if args.sm_min_size < 1:
+        parser.error("--sm-min-size debe ser >= 1")
+    if not np.isfinite(args.sm_fondo_k) or args.sm_fondo_k < 0:
+        parser.error("--sm-fondo-k debe ser finito y >= 0")
+    return args
 
 
 # =========================================================
-# 2. PREPROCESAMIENTO Y OTSU
+# 2. PREPROCESAMIENTO Y SEGMENTACIÓN
 # =========================================================
 
-def aplicar_tratamiento(rgb, tratamiento):
+def aplicar_tratamiento(rgb, tratamiento, sm_tau=10.0, sm_min_size=4, sm_fondo_k=3.0):
     rgb = np.asarray(rgb, dtype=np.uint8)
 
     stats = {
@@ -164,14 +183,14 @@ def aplicar_tratamiento(rgb, tratamiento):
     if tratamiento == "original":
         return rgb, stats
 
-    if tratamiento in ("gaussian", "gaussian_otsu"):
+    if tratamiento in ("gaussian", "gaussian_otsu", "gaussian_split_merge"):
         procesada = cv2.GaussianBlur(
             rgb,
             (5, 5),
             sigmaX=1
         )
 
-    elif tratamiento in ("clahe", "clahe_otsu"):
+    elif tratamiento in ("clahe", "clahe_otsu", "clahe_split_merge"):
         lab = cv2.cvtColor(
             rgb,
             cv2.COLOR_RGB2LAB
@@ -193,6 +212,12 @@ def aplicar_tratamiento(rgb, tratamiento):
 
     else:
         raise ValueError(f"Tratamiento inválido: {tratamiento}")
+
+    if tratamiento.endswith("_split_merge"):
+        final, _, _, stats = segmentar_split_merge(
+            procesada, tau=sm_tau, min_size=sm_min_size, fondo_k=sm_fondo_k
+        )
+        return final, stats
 
     if not tratamiento.endswith("_otsu"):
         return procesada, stats
@@ -517,7 +542,7 @@ def crear_configuracion(args, datos, tratamiento):
         PROMPT.encode("utf-8")
     ).hexdigest()
 
-    return {
+    config = {
         "model_id": args.model,
         "dataset_path": str(Path(args.dataset).resolve()),
         "validation_hash": dataset_hash,
@@ -534,6 +559,21 @@ def crear_configuracion(args, datos, tratamiento):
         "otsu_output": "masked_rgb",
         "pipeline_version": "v2_sqlite",
     }
+    # Mantener intacta la configuración de los cinco experimentos anteriores
+    # para poder reanudarlos sin invalidar sus CSV ni sus runs de MLflow.
+    if tratamiento.endswith("_split_merge"):
+        config.update({
+            "pipeline_version": "v3_split_merge",
+            "sm_tau": args.sm_tau,
+            "sm_min_size": args.sm_min_size,
+            "sm_fondo_k": args.sm_fondo_k,
+            "sm_homogeneity": "std_union_le_tau",
+            "sm_adjacency": 4,
+            "sm_merge_order": "lowest_union_std_then_region_ids",
+            "sm_foreground": "region_mean_gt_border_median_plus_k_max_1_1.4826mad",
+            "sm_output": "masked_rgb",
+        })
+    return config
 
 
 def guardar_o_validar_config(ruta, config):
@@ -556,13 +596,13 @@ def guardar_o_validar_config(ruta, config):
         )
 
 
-def cargar_completados(csv_path, datos):
+def cargar_completados(csv_path, datos, columnas=None):
     if not csv_path.exists():
         return set()
 
     anterior = pd.read_csv(csv_path)
 
-    if not set(COLUMNAS).issubset(anterior.columns):
+    if not set(COLUMNAS if columnas is None else columnas).issubset(anterior.columns):
         raise ValueError(
             f"CSV incompleto o incompatible: {csv_path}"
         )
@@ -641,6 +681,7 @@ def ejecutar_tratamiento(
     config_path = carpeta / "config.json"
     metrics_path = carpeta / "metrics.json"
     matrix_path = carpeta / "confusion_matrix.png"
+    columnas = COLUMNAS + (COLUMNAS_SPLIT_MERGE if nombre.endswith("_split_merge") else [])
 
     config = crear_configuracion(args, datos, nombre)
 
@@ -651,7 +692,8 @@ def ejecutar_tratamiento(
 
     completados = cargar_completados(
         csv_path,
-        datos
+        datos,
+        columnas
     )
 
     pendientes = datos[
@@ -689,7 +731,7 @@ def ejecutar_tratamiento(
 
             writer = csv.DictWriter(
                 archivo,
-                fieldnames=COLUMNAS
+                fieldnames=columnas
             )
 
             if crear_cabecera:
@@ -708,10 +750,16 @@ def ejecutar_tratamiento(
                     dtype=np.uint8
                 )
 
+                inicio_preprocesamiento = time.perf_counter()
                 procesada, stats = aplicar_tratamiento(
                     rgb,
-                    nombre
+                    nombre,
+                    sm_tau=args.sm_tau,
+                    sm_min_size=args.sm_min_size,
+                    sm_fondo_k=args.sm_fondo_k,
                 )
+                if nombre.endswith("_split_merge"):
+                    stats["preprocessing_s"] = time.perf_counter() - inicio_preprocesamiento
 
                 pred, texto, valido, tiempo_s = clasificar(
                     procesada,
@@ -763,6 +811,12 @@ def ejecutar_tratamiento(
                     resultados["num_regions"].mean()
                 ),
             })
+
+        if nombre.endswith("_split_merge"):
+            for columna in ["segmented_pct", "num_regions"] + COLUMNAS_SPLIT_MERGE:
+                metricas[f"mean_{columna}"] = float(resultados[columna].mean())
+            metricas["empty_masks"] = int((resultados["segmented_pct"] == 0).sum())
+            metricas["full_masks"] = int((resultados["segmented_pct"] == 100).sum())
 
         guardar_matriz(
             resultados,
@@ -820,6 +874,30 @@ def ejecutar_tratamiento(
 # 10. PIPELINE PRINCIPAL
 # =========================================================
 
+def consolidar_resultados(salida, args, datos):
+    """Conserva en la comparación los tratamientos previos completos y compatibles."""
+    filas = []
+    for nombre in TRATAMIENTOS:
+        carpeta = salida / nombre
+        config_path = carpeta / "config.json"
+        metrics_path = carpeta / "metrics.json"
+        csv_path = carpeta / "predictions.csv"
+        if not all(p.exists() for p in (config_path, metrics_path, csv_path)):
+            continue
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        if config != crear_configuracion(args, datos, nombre):
+            print(f"Comparación: se omite {nombre}, su configuración es distinta.")
+            continue
+        columnas = COLUMNAS + (COLUMNAS_SPLIT_MERGE if nombre.endswith("_split_merge") else [])
+        if len(cargar_completados(csv_path, datos, columnas)) != len(datos):
+            continue
+        metricas = json.loads(metrics_path.read_text(encoding="utf-8"))
+        if metricas.get("total_inferences") != len(datos):
+            continue
+        filas.append({"treatment": nombre, **metricas})
+    return pd.DataFrame(filas)
+
+
 def main():
     args = argumentos()
 
@@ -839,13 +917,12 @@ def main():
     tratamientos = (
         TRATAMIENTOS
         if args.treatment == "all"
+        else TRATAMIENTOS_SPLIT_MERGE if args.treatment == "split_merge"
         else [args.treatment]
     )
 
     # Solo cargar el modelo una vez.
     processor, model = cargar_qwen(args.model)
-
-    resumen = []
 
     with h5py.File(args.dataset, "r") as f:
         imagenes = f["images"]
@@ -859,7 +936,7 @@ def main():
             )
 
         for nombre in tratamientos:
-            resultado = ejecutar_tratamiento(
+            ejecutar_tratamiento(
                 nombre,
                 datos,
                 imagenes,
@@ -870,14 +947,12 @@ def main():
                 salida
             )
 
-            resumen.append(resultado)
-
-            pd.DataFrame(resumen).to_csv(
+            consolidar_resultados(salida, args, datos).to_csv(
                 salida / "comparacion_mlflow.csv",
                 index=False
             )
 
-    tabla = pd.DataFrame(resumen)
+    tabla = consolidar_resultados(salida, args, datos)
 
     print("\n" + "=" * 60)
     print("BENCHMARK COMPLETADO")

@@ -25,3 +25,7 @@ mlartifacts/
 mlflow.db
 mlflow.db-shm
 mlflow.db-wal
+
+# Exportaciones individuales de segmentación; conservar CSV, configuración y comparación.
+resultados_split_merge/*/clase_*/
+resultados_split_merge/*_ejecucion.log
